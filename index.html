@@ -1,3 +1,110 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>きのうの“え？”</title></head>
-<body><p>じゅんびちゅう</p></body></html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>きのうの“え？”</title>
+<meta name="theme-color" content="#fff7ec">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>😳</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7ec; --card:#ffffff; --ink:#2b2420; --sub:#7a6d63; --line:#f0e2d0;
+  --accent:#ff5c8a; --accent2:#ffb627; --chip:#fff0f4; --link:#d6336c;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1d1a18; --card:#2a2624; --ink:#f3ece6; --sub:#b5a89d; --line:#3a3431;
+    --accent:#ff7aa2; --accent2:#ffc857; --chip:#3a2a30; --link:#ff8fb1;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  line-height:1.85;font-size:17px;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 64px}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.logo{font-weight:800;font-size:22px;letter-spacing:.02em}
+.logo span{color:var(--accent)}
+.date{color:var(--sub);font-size:14px}
+.issue-title{font-size:15px;color:var(--sub);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;margin:0 0 16px}
+.main{border:2px solid var(--accent)}
+.label{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--chip);color:var(--accent);margin-bottom:6px}
+.label.main-l{background:var(--accent);color:#fff}
+h2{font-size:20px;line-height:1.5;margin:4px 0 10px;font-weight:800}
+h3{font-size:17px;line-height:1.5;margin:4px 0 8px;font-weight:800}
+p{margin:0 0 .9em;overflow-wrap:anywhere}
+.src{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);padding-top:8px;margin-top:4px;overflow-wrap:anywhere}
+.src a{color:var(--link)}
+.region{font-size:12px;color:var(--sub);margin-left:6px}
+.note{text-align:center;font-size:18px;padding:32px 18px}
+.archive{margin-top:28px}
+.archive h4{font-size:15px;margin:0 0 8px;color:var(--sub)}
+.archive ul{list-style:none;padding:0;margin:0}
+.archive li{border-bottom:1px solid var(--line)}
+.archive a{display:flex;gap:10px;padding:10px 4px;color:var(--ink);text-decoration:none;font-size:15px}
+.archive a.cur{color:var(--accent);font-weight:700}
+.archive .d{color:var(--sub);flex:none;width:5.2em}
+.empty{color:var(--sub);text-align:center;padding:40px 0}
+footer{font-size:12px;color:var(--sub);text-align:center;margin-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">きのうの<span>“え？”</span></div>
+    <div class="date" id="date"></div>
+  </header>
+  <p class="issue-title" id="title"></p>
+  <main id="content"><p class="empty">よみこみ中…</p></main>
+  <nav class="archive" id="archive"></nav>
+  <footer>事実だけ・元記事リンクつき・ゴシップなし</footer>
+</div>
+<script>
+(function(){
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var safeUrl=function(u){return /^https?:\/\//i.test(u||'')?u:'#'};
+  var fmt=function(d){var p=d.split('-');return (+p[1])+'/'+(+p[2])};
+  var wd=function(d){return '日月火水木金土'.charAt(new Date(d+'T00:00:00').getDay())};
+  var src=function(s){if(!s)return '';return '<div class="src">📰 '+esc(s.name)+'（'+esc(s.date)+'）<br><a href="'+esc(safeUrl(s.url))+'" target="_blank" rel="noopener">元記事をひらく</a></div>'};
+  var nocache='?t='+Date.now();
+  var content=document.getElementById('content');
+
+  fetch('data/issues.json'+nocache).then(function(r){return r.json()}).then(function(list){
+    if(!list.length){content.innerHTML='<p class="empty">まだ号がないよ〜</p>';return}
+    var want=(location.hash||'').slice(1);
+    var cur=list.some(function(x){return x.date===want})?want:list[0].date;
+    renderArchive(list,cur);
+    return fetch('issues/'+cur+'.json'+nocache).then(function(r){return r.json()}).then(renderIssue);
+  }).catch(function(){content.innerHTML='<p class="empty">読みこめなかった…ちょっと待ってもう一回ひらいてね🙏</p>'});
+
+  window.addEventListener('hashchange',function(){location.reload()});
+
+  function renderIssue(x){
+    document.getElementById('date').textContent=fmt(x.date)+'（'+wd(x.date)+'）のぶん';
+    document.getElementById('title').textContent=x.title||'';
+    var h='';
+    if(x.main){
+      h+='<article class="card main"><span class="label main-l">きょうのメイン</span><span class="region">'+esc(x.main.region)+'</span>'+
+        '<h2>'+esc(x.main.headline)+'</h2>'+
+        (x.main.body||[]).map(function(p){return '<p>'+esc(p)+'</p>'}).join('')+src(x.main.source)+'</article>';
+    }
+    (x.shorts||[]).forEach(function(s,i){
+      h+='<article class="card"><span class="label">小ネタ '+(i+1)+'</span><span class="region">'+esc(s.region)+'</span>'+
+        '<h3>'+esc(s.headline)+'</h3><p>'+esc(s.body)+'</p>'+src(s.source)+'</article>';
+    });
+    if(!x.main && x.note){h='<div class="card note">'+esc(x.note)+'</div>'}
+    content.innerHTML=h||'<p class="empty">この日は号がないよ</p>';
+    window.scrollTo(0,0);
+  }
+  function renderArchive(list,cur){
+    document.getElementById('archive').innerHTML='<h4>これまでの号</h4><ul>'+list.slice(0,60).map(function(x){
+      return '<li><a href="#'+esc(x.date)+'"'+(x.date===cur?' class="cur"':'')+'><span class="d">'+fmt(x.date)+'（'+wd(x.date)+'）</span><span>'+esc(x.title)+'</span></a></li>'}).join('')+'</ul>';
+  }
+})();
+</script>
+</body>
+</html>
