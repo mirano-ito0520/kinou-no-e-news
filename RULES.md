@@ -72,9 +72,10 @@
 - 作業する前に `git pull --ff-only origin main` で最新にしておく。
 - その日の号（`issues/対象日.json`）がもう存在したら、作り直さずに終了する（二重に出さない）。
 - `git add issues data && git commit -m "YYYY-MM-DD 号" && git push origin main`
-- push に成功したら、スマホに通知を送る（送り先は ntfy の `kinou-e-660df56e5e`）：
+- push に成功したら、スマホに通知を送る（curl は日本語が化けるので使わない。必ずこの道具で）：
 ```bash
-curl -sS -H "Title: =?UTF-8?B?$(printf 'きのうの“え？” 届いたよ' | base64 -w0)?=" -H "Click: https://mirano-ito0520.github.io/kinou-no-e-news/" -d "本日のメイン：（メインの見出し）／全N本" https://ntfy.sh/kinou-e-660df56e5e
+python "C:/Users/Admin/マイドライブ/06.AI/Claudecode/くだらないニュース/tools/tsuuchi.py" "きのうの“え？” 届いたよ" "本日のメイン：（メインの見出し）／全N本"
 ```
+  - 200 と表示されたら送信成功。
 - 0本の日は「きのうは平和すぎた日だったよ〜」と通知する。
 - 失敗したとき（記事が集められない・push できない など）も、何が失敗したかを一言で通知する。
